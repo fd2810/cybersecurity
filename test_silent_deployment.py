@@ -16,7 +16,7 @@ from unittest.mock import Mock, patch, MagicMock
 import psutil
 
 # Import the module to test
-from silent_deployment import (
+from agent.features.silent_deployment import (
     run,
     _detect_silent_deployment,
     _detect_no_window,
@@ -76,7 +76,7 @@ class TestSilentDeploymentRun:
         """Test that run() handles errors gracefully."""
         callback = Mock()
         
-        with patch('silent_deployment._detect_silent_deployment') as mock_detect:
+        with patch('agent.features.silent_deployment._detect_silent_deployment') as mock_detect:
             mock_detect.side_effect = Exception("Test error")
             result = run(callback)
             
