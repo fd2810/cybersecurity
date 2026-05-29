@@ -11,7 +11,7 @@ import sys
 import platform
 import socket
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 try:
@@ -183,7 +183,7 @@ def collect_telemetry():
     """
     try:
         telemetry_data = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
             "boot_time": get_boot_time(),
             "install_path": get_install_path(),
             "running_as": get_running_as(),
