@@ -12,7 +12,7 @@ Uses scapy library for packet capture and analysis.
 """
 
 from datetime import datetime
-import base64
+import json
 import re
 
 
@@ -59,17 +59,20 @@ def run(send_event):
         Returns:
             tuple: (found: bool, credential_type: str)
         """
-        patterns = {
-            "password_field": r"password=",
-            "passwd_field": r"passwd=",
-            "basic_auth": r"Authorization:\s*Basic\s+[A-Za-z0-9+/=]+"
-        }
-        
-        for cred_type, pattern in patterns.items():
-            if re.search(pattern, payload_str, re.IGNORECASE):
-                return True, cred_type
-        
-        return False, None
+        try:
+            patterns = {
+                "password_field": r"password=",
+                "passwd_field": r"passwd=",
+                "basic_auth": r"Authorization:\s*Basic\s+[A-Za-z0-9+/=]+"
+            }
+            
+            for cred_type, pattern in patterns.items():
+                if re.search(pattern, payload_str, re.IGNORECASE):
+                    return True, cred_type
+            
+            return False, None
+        except Exception:
+            return False, None
 
     def check_dns_tunneling(dns_packet):
         """
@@ -81,17 +84,20 @@ def run(send_event):
         Returns:
             tuple: (suspicious: bool, long_label: str)
         """
-        if not dns_packet.haslayer(DNSQR):
+        try:
+            if not dns_packet.haslayer(DNSQR):
+                return False, None
+            
+            qname = dns_packet[DNSQR].qname.decode('utf-8', errors='ignore')
+            labels = qname.split('.')
+            
+            for label in labels:
+                if len(label) > DNS_SUBDOMAIN_THRESHOLD:
+                    return True, label
+            
             return False, None
-        
-        qname = dns_packet[DNSQR].qname.decode('utf-8', errors='ignore')
-        labels = qname.split('.')
-        
-        for label in labels:
-            if len(label) > DNS_SUBDOMAIN_THRESHOLD:
-                return True, label
-        
-        return False, None
+        except Exception:
+            return False, None
 
     def process_packet(packet):
         """
@@ -324,3 +330,12 @@ def run(send_event):
         },
         'info'
     )
+
+
+if __name__ == "__main__":
+    def mock_send(event_type, feature_id, data, severity):
+        """Mock send_event for testing without live network capture."""
+        print(f"[{severity.upper()}] Event: {event_type} | Feature: {feature_id}")
+        print(json.dumps(data, indent=2))
+    
+    run(mock_send)
